@@ -7,6 +7,7 @@ import {FontLoader} from "./three.js/examples/jsm/loaders/FontLoader.js"
 let scene, camera, renderer, controls
 let loader = new GLTFLoader()
 let activeCamera = "cam1";
+let day, night
 
 const initCam1 = () => {
     scene = new THREE.Scene()
@@ -34,6 +35,8 @@ const initRenderer = () =>{
     renderer.antialiasing = true
     renderer.setClearColor("lightblue")
     document.body.appendChild(renderer.domElement);
+    controls = new OrbitControls(camera, renderer.domElement)
+    controls.target.set(0, 50, 0)
 }
 
 const switchCamera = () => {
@@ -50,6 +53,16 @@ document.addEventListener("keydown", (event) => {
     if (event.key.toLowerCase() == "c") {
         switchCamera();
         
+    }
+
+    if (event.code == "Space") {
+        if (light.intensity == 1.2) {
+            light.intensity = 0.5
+            scene.background = night
+        } else {
+            light.intensity = 1.2
+            scene.background = day
+        }
     }
 });
 
@@ -107,6 +120,31 @@ const addPlantsNoZombie = () => {
     )
 }
 
+const initSky = () => {
+    day = new THREE.CubeTextureLoader()
+    .load([
+        "./Assets/cloudy/bluecloud_ft.jpg",
+        "./Assets/cloudy/bluecloud_bk.jpg",
+        "./Assets/cloudy/bluecloud_up.jpg",
+        "./Assets/cloudy/bluecloud_dn.jpg",
+        "./Assets/cloudy/bluecloud_rt.jpg",
+        "./Assets/cloudy/bluecloud_lf.jpg"
+    ])
+
+    night = new THREE.CubeTextureLoader()
+    .load([
+        "./Assets/nightskycolor.png",
+        "./Assets/nightskycolor.png",
+        "./Assets/nightskycolor.png",
+        "./Assets/nightskycolor.png",
+        "./Assets/nightskycolor.png",
+        "./Assets/nightskycolor.png"
+    ])
+
+    scene.background = day
+}
+
+
 let light = () =>{
     let light = new THREE.AmbientLight('#FFFFFC')
     light.position.set(0,0,0)
@@ -120,7 +158,7 @@ let light = () =>{
 let spotlight = () =>{
     let light = new THREE.SpotLight('#FFFFFF')
     light.position.set(-80, 40, 0)
-    light.intensity = 1.2, 0.5
+    light.intensity = 1.2
     light.castShadow = true
 
     scene.add(light)
@@ -130,6 +168,7 @@ let spotlight = () =>{
 const render = () => {
     requestAnimationFrame(render)
     renderer.render(scene,camera)
+    controls.update()
 }
 
 
@@ -141,6 +180,7 @@ window.onload = () => {
     pointfunc()
     loaderZombie()
     addPlantsNoZombie();
+    initSky()
     light()
     spotlight()
     render()
