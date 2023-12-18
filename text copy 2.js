@@ -60,7 +60,7 @@ document.addEventListener("keydown", (event) => {
     }
 
     if (event.code == "Space") {
-        // Toggle between day and night
+
         if (spotlight.intensity == 1.2) {
             spotlight.intensity = 0.5;
             scene.background = night;
