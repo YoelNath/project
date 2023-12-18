@@ -210,9 +210,6 @@ const animatePeaProjectile = () => {
             removePeaProjectile();
         }
 
-        if (peaProjectile.position.x > 100) {
-            removePeaProjectile();
-        }
 
         requestAnimationFrame(animate);
     };
