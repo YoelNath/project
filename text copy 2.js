@@ -1,43 +1,44 @@
-import * as THREE from './three.js/build/three.module.js'
-import { OrbitControls } from './three.js/examples/jsm/controls/OrbitControls.js'
-import {GLTFLoader} from './three.js/examples/jsm/loaders/GLTFLoader.js'
-import {TextGeometry} from "./three.js/examples/jsm/geometries/TextGeometry.js"
-import {FontLoader} from "./three.js/examples/jsm/loaders/FontLoader.js"
+import * as THREE from './three.js/build/three.module.js';
+import { OrbitControls } from './three.js/examples/jsm/controls/OrbitControls.js';
+import { GLTFLoader } from './three.js/examples/jsm/loaders/GLTFLoader.js';
+import { TextGeometry } from "./three.js/examples/jsm/geometries/TextGeometry.js";
+import { FontLoader } from "./three.js/examples/jsm/loaders/FontLoader.js";
 
-let scene, camera, renderer, controls
-let loader = new GLTFLoader()
+let scene, camera, renderer, controls;
+let loader = new GLTFLoader();
 let activeCamera = "cam1";
-let day, night
+let day, night;
+let light, spotlight; // Declare light sources globally
 
 const initCam1 = () => {
-    scene = new THREE.Scene()
-    
-    let w = window.innerWidth
-    let h = window.innerHeight
-    camera = new THREE.PerspectiveCamera(45, w/h)
-    camera.position.set(0,15,55)
-    camera.lookAt(0,7,0)
-}
+    scene = new THREE.Scene();
+
+    let w = window.innerWidth;
+    let h = window.innerHeight;
+    camera = new THREE.PerspectiveCamera(45, w / h);
+    camera.position.set(0, 15, 55);
+    camera.lookAt(0, 7, 0);
+};
 
 const initCam2 = () => {
-    let w = window.innerWidth
-    let h = window.innerHeight
-    camera = new THREE.PerspectiveCamera(45, w/h)
-    camera.position.set(-55,15,0)
-    camera.lookAt(0,15,0)
-}
+    let w = window.innerWidth;
+    let h = window.innerHeight;
+    camera = new THREE.PerspectiveCamera(45, w / h);
+    camera.position.set(-55, 15, 0);
+    camera.lookAt(0, 15, 0);
+};
 
-const initRenderer = () =>{
+const initRenderer = () => {
     renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true
+    renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap;
-    renderer.antialiasing = true
-    renderer.setClearColor("lightblue")
+    renderer.antialiasing = true;
+    renderer.setClearColor("lightblue");
     document.body.appendChild(renderer.domElement);
-    controls = new OrbitControls(camera, renderer.domElement)
-    controls.target.set(0, 50, 0)
-}
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 50, 0);
+};
 
 const switchCamera = () => {
     if (activeCamera == "cam2") {
@@ -52,52 +53,66 @@ const switchCamera = () => {
 document.addEventListener("keydown", (event) => {
     if (event.key.toLowerCase() == "c") {
         switchCamera();
-        
     }
 
     if (event.code == "Space") {
-        if (light.intensity == 1.2) {
-            light.intensity = 0.5
-            scene.background = night
+        // Toggle between day and night
+        if (spotlight.intensity == 1.2) {
+            spotlight.intensity = 0.5;
+            scene.background = night;
         } else {
-            light.intensity = 1.2
-            scene.background = day
+            spotlight.intensity = 1.2;
+            scene.background = day;
         }
     }
 });
 
-const pointfunc = () =>{
+const pointfunc = () => {
+    let geometry = new THREE.PlaneBufferGeometry(100, 75);
+    let loader = new THREE.TextureLoader();
+    let texture = loader.load("./img/green-grass-field-background-soccer-football-sports-lawn-pattern-texture-close-up-image-142564163.jpg");
+    let material = new THREE.MeshStandardMaterial({
+        map: texture
+    });
+    let mesh = new THREE.Mesh(geometry, material);
+    mesh.receiveShadow = true;
+    mesh.rotateX(-Math.PI / 2);
+    mesh.position.set(0, 0, -7.5);
+    scene.add(mesh);
+};
 
-let geometry = new THREE.PlaneBufferGeometry(100,75)
-let loader = new THREE.TextureLoader()
-let texture = loader.load("./img/green-grass-field-background-soccer-football-sports-lawn-pattern-texture-close-up-image-142564163.jpg")
-let material = new THREE.MeshStandardMaterial({
-    map:texture
-})
-let mesh = new THREE.Mesh(geometry,material)
-mesh.receiveShadow = true
-mesh.rotateX(-Math.PI/2)
-mesh.position.set(0,0,-7.5)
-scene.add(mesh)
-
-}
-
-const loaderZombie = () =>{
+const loaderZombie = () => {
     loader.load("./Assets/zombie/scene.gltf", function (GLTF) {
-        let zombie = GLTF.scene
-        zombie.traverse(function(child) {
+        let zombie = GLTF.scene;
+        zombie.traverse(function (child) {
             if (child.isMesh) {
-                child.castShadow = true
-                child.receiveShadow = true
+                child.castShadow = true;
+                child.receiveShadow = true;
             }
-        })
-        zombie.scale.set(60, 60, 60)
-        zombie.position.set(10, 0, 0)
-        zombie.rotateY(-Math.PI/4)
-        zombie.castShadow = true
-        scene.add(zombie)
-    })
-}
+        });
+        zombie.scale.set(60, 60, 60);
+        zombie.position.set(10, 0, 0);
+        zombie.rotateY(-Math.PI / 4);
+        zombie.castShadow = true;
+        scene.add(zombie);
+    });
+};
+
+const loaderFence = () => {
+    loader.load("./Assets/fence/scene.gltf", function (GLTF) {
+        let fence = GLTF.scene;
+        fence.traverse(function (child) {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+        fence.scale.set(10, 10, 10);
+        fence.position.set(-40, 8.5, -44);
+        fence.castShadow = true;
+        scene.add(fence);
+    });
+};
 
 const addPlantsNoZombie = () => {
     const loader = new FontLoader();
@@ -107,89 +122,88 @@ const addPlantsNoZombie = () => {
                 font: font,
                 size: 10,
                 height: 2
-            })
+            });
 
             const textMaterial = new THREE.MeshPhongMaterial({
                 color: "#CCB7B6"
-            })
+            });
 
             const textMesh = new THREE.Mesh(textGeometry, textMaterial);
             textMesh.position.set(-55, 20, -50);
             scene.add(textMesh);
         }
-    )
-}
+    );
+};
 
 const initSky = () => {
     day = new THREE.CubeTextureLoader()
-    .load([
-        "./Assets/cloudy/bluecloud_ft.jpg",
-        "./Assets/cloudy/bluecloud_bk.jpg",
-        "./Assets/cloudy/bluecloud_up.jpg",
-        "./Assets/cloudy/bluecloud_dn.jpg",
-        "./Assets/cloudy/bluecloud_rt.jpg",
-        "./Assets/cloudy/bluecloud_lf.jpg"
-    ])
+        .load([
+            "./Assets/cloudy/bluecloud_ft.jpg",
+            "./Assets/cloudy/bluecloud_bk.jpg",
+            "./Assets/cloudy/bluecloud_up.jpg",
+            "./Assets/cloudy/bluecloud_dn.jpg",
+            "./Assets/cloudy/bluecloud_rt.jpg",
+            "./Assets/cloudy/bluecloud_lf.jpg"
+        ]);
 
     night = new THREE.CubeTextureLoader()
-    .load([
-        "./Assets/nightskycolor.png",
-        "./Assets/nightskycolor.png",
-        "./Assets/nightskycolor.png",
-        "./Assets/nightskycolor.png",
-        "./Assets/nightskycolor.png",
-        "./Assets/nightskycolor.png"
-    ])
+        .load([
+            "./Assets/nightskycolor.png",
+            "./Assets/nightskycolor.png",
+            "./Assets/nightskycolor.png",
+            "./Assets/nightskycolor.png",
+            "./Assets/nightskycolor.png",
+            "./Assets/nightskycolor.png"
+        ]);
 
-    scene.background = day
-}
+    scene.background = day;
+};
 
+light = () => {
+    // Declare the ambient light globally
+    light = new THREE.AmbientLight('#FFFFFC');
+    light.position.set(0, 0, 0);
+    light.intensity = 0.5;
+    light.castShadow = false;
 
-let light = () =>{
-    let light = new THREE.AmbientLight('#FFFFFC')
-    light.position.set(0,0,0)
-    light.intensity = 0.5
-    light.castShadow = false
-  
-    scene.add(light)
+    scene.add(light);
+};
 
-}
+spotlight = () => {
+    // Declare the spotlight globally
+    spotlight = new THREE.SpotLight('#FFFFFF');
+    spotlight.position.set(-80, 40, 0);
+    spotlight.intensity = 1.2;
+    spotlight.castShadow = true;
 
-let spotlight = () =>{
-    let light = new THREE.SpotLight('#FFFFFF')
-    light.position.set(-80, 40, 0)
-    light.intensity = 1.2
-    light.castShadow = true
-
-    scene.add(light)
-
-}
+    scene.add(spotlight);
+};
 
 const render = () => {
-    requestAnimationFrame(render)
-    renderer.render(scene,camera)
-    controls.update()
-}
-
+    requestAnimationFrame(render);
+    renderer.render(scene, camera);
+    controls.update();
+};
 
 window.onload = () => {
-    initCam1()
-    initCam2()
-    initRenderer()
-    switchCamera()
-    pointfunc()
-    loaderZombie()
+    initCam1();
+    initCam2();
+    initRenderer();
+    switchCamera();
+    pointfunc();
+    loaderZombie();
+    loaderFence();
     addPlantsNoZombie();
-    initSky()
-    light()
-    spotlight()
-    render()
-}
+    initSky();
+    light();
+    spotlight();
+    render();
+};
 
 window.onresize = () => {
-    let w = window.innerWidth
-    let h = window.innerHeight
-    renderer.setSize(w,h)
-    camera.aspect = w/h
-    camera.updateProjectionMatrix()
-}
+    let w = window.innerWidth;
+    let h = window.innerHeight;
+    renderer.setSize(w, h);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+};
