@@ -8,7 +8,8 @@ let scene, camera, renderer, controls;
 let loader = new GLTFLoader();
 let activeCamera = "cam1";
 let day, night;
-let light, spotlight; // Declare light sources globally
+let light, spotlight; 
+let peashooter, peaProjectile, zombie;
 
 const initCam1 = () => {
     scene = new THREE.Scene();
@@ -26,6 +27,7 @@ const initCam2 = () => {
     camera = new THREE.PerspectiveCamera(45, w / h);
     camera.position.set(-55, 15, 0);
     camera.lookAt(0, 15, 0);
+    
 };
 
 const initRenderer = () => {
@@ -38,6 +40,8 @@ const initRenderer = () => {
     document.body.appendChild(renderer.domElement);
     controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 50, 0);
+    addPeashooter();
+    loaderZombie();
 };
 
 const switchCamera = () => {
@@ -68,13 +72,13 @@ document.addEventListener("keydown", (event) => {
 });
 
 const pointfunc = () => {
-    let geometry = new THREE.PlaneBufferGeometry(100, 75);
-    let loader = new THREE.TextureLoader();
-    let texture = loader.load("./img/green-grass-field-background-soccer-football-sports-lawn-pattern-texture-close-up-image-142564163.jpg");
-    let material = new THREE.MeshStandardMaterial({
+    const geometry = new THREE.PlaneBufferGeometry(100, 75);
+    const loader = new THREE.TextureLoader();
+    const texture = loader.load("./img/green-grass-field-background-soccer-football-sports-lawn-pattern-texture-close-up-image-142564163.jpg");
+    const material = new THREE.MeshStandardMaterial({
         map: texture
     });
-    let mesh = new THREE.Mesh(geometry, material);
+    const mesh = new THREE.Mesh(geometry, material);
     mesh.receiveShadow = true;
     mesh.rotateX(-Math.PI / 2);
     mesh.position.set(0, 0, -7.5);
@@ -83,13 +87,15 @@ const pointfunc = () => {
 
 const addPeashooter = () => {
   
+    peashooter = new THREE.Group();
+
     const headGeometry = new THREE.SphereGeometry(2.5, 64, 64);
     const headMaterial = new THREE.MeshPhongMaterial({ color: '#52D017', shininess: 30 });
     const head = new THREE.Mesh(headGeometry, headMaterial);
     head.position.set(-30, 10, 0);
     head.castShadow = true;
-    scene.add(head);
-
+    peashooter.add(head);
+    scene.add(peashooter);
 
     const mouthGeometry = new THREE.CylinderGeometry(0.5, 1, 2.5, 64, 64, true);
     const mouthMaterial = new THREE.MeshPhongMaterial({ color: '#52D017', shininess: 30 });
@@ -131,9 +137,24 @@ const addPeashooter = () => {
     scene.add(trunk);
 };
 
+const walnut =() =>{
+    const walnutGeometry = new THREE.CylinderGeometry(4.5, 4.5, 3, 64, 64,);
+    const loader = new THREE.TextureLoader();
+    const texture = loader.load("https://render.fineartamerica.com/images/rendered/default/poster/10/8/break/images/artworkimages/medium/2/popcorn-texture-marcus-jules.jpg");
+    
+    const walnutMaterial = new THREE.MeshPhongMaterial({ color: '#4BBF15', map: texture });
+    
+    const walnut = new THREE.Mesh(walnutGeometry, walnutMaterial);
+    walnut.position.set(-17.5, 4.5, 0);
+    walnut.rotation.z = Math.PI / 2;
+    walnut.castShadow = true;
+    
+    scene.add(walnut);
+ 
+}
 const loaderZombie = () => {
     loader.load("./Assets/zombie/scene.gltf", function (GLTF) {
-        let zombie = GLTF.scene;
+        zombie = GLTF.scene;
         zombie.traverse(function (child) {
             if (child.isMesh) {
                 child.castShadow = true;
@@ -147,6 +168,65 @@ const loaderZombie = () => {
         scene.add(zombie);
     });
 };
+
+const onMouseClick = (event) => {
+    const mouse = new THREE.Vector2();
+    const raycaster = new THREE.Raycaster();
+
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+
+    const intersects = raycaster.intersectObject(peashooter.children[0], true);
+
+    if (intersects.length > 0) {
+        spawnPeaProjectile();
+    }
+};
+
+document.addEventListener("click", onMouseClick);
+
+const spawnPeaProjectile = () => {
+    if (!peaProjectile) {
+        const peaGeometry = new THREE.SphereGeometry(1, 64, 64);
+        const peaMaterial = new THREE.MeshPhongMaterial({ color: '#52D017', shininess: 30 });
+        peaProjectile = new THREE.Mesh(peaGeometry, peaMaterial);
+        peaProjectile.position.set(-27, 10, 0);
+        peaProjectile.castShadow = true;
+        scene.add(peaProjectile);
+
+        animatePeaProjectile();
+    }
+};
+
+const animatePeaProjectile = () => {
+    const speed = 5;
+
+    const animate = () => {
+        peaProjectile.position.x += speed;
+
+        if (peaProjectile.position.distanceTo(zombie.position) < 5) {
+            removePeaProjectile();
+        }
+
+        if (peaProjectile.position.x > 100) {
+            removePeaProjectile();
+        }
+
+        requestAnimationFrame(animate);
+    };
+
+    animate();
+};
+
+const removePeaProjectile = () => {
+    if (peaProjectile) {
+        scene.remove(peaProjectile);
+        peaProjectile = undefined;
+    }
+};
+
 
 const loaderFence = () => {
     loader.load("./Assets/fence/scene.gltf", function (GLTF) {
@@ -243,6 +323,7 @@ const addPlantsNoZombie = () => {
 };
 
 
+
 const initSky = () => {
     day = new THREE.CubeTextureLoader()
         .load([
@@ -267,20 +348,7 @@ const initSky = () => {
     scene.background = day;
 };
 
-const walnut =() =>{
-    const walnutGeometry = new THREE.CylinderGeometry(4.5, 4.5, 3, 64, 64, true);
-    const texture = loader.load("./img/green-grass-field-background-soccer-football-sports-lawn-pattern-texture-close-up-image-142564163.jpg");
-    
-    const walnutMaterial = new THREE.MeshPhongMaterial({ color: '#4BBF15', map: texture });
-    
-    const walnut = new THREE.Mesh(walnutGeometry, walnutMaterial);
-    walnut.position.set(-17.5, 4.5, 0);
-    walnut.rotation.z = Math.PI / 2;
-    walnut.castShadow = true;
-    
-    scene.add(walnut);
- 
-}
+
 
 light = () => {
 
@@ -314,10 +382,11 @@ window.onload = () => {
     initRenderer();
     switchCamera();
     pointfunc();
+    walnut();
     loaderZombie();
     loaderFence();
     addPlantsNoZombie();
-    walnut();
+
     addPeashooter();
     initSky();
     light();
